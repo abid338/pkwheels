@@ -1,0 +1,286 @@
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+/* Profile Header Card */
+.profile-header-card {
+  border: none;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  background: white;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+}
+
+.profile-header-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: var(--primary-gradient);
+}
+
+.profile-avatar {
+  position: relative;
+  z-index: 2;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  border: 5px solid white;
+}
+
+.profile-avatar i {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 80px;
+}
+
+.profile-name {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  font-size: 2rem;
+}
+
+.profile-info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  );
+  border-radius: 20px;
+  margin: 5px;
+}
+
+.profile-info-item i {
+  color: #667eea;
+}
+
+/* Success/Error Alerts */
+.custom-alert-success {
+  background: linear-gradient(
+    135deg,
+    rgba(240, 147, 251, 0.15) 0%,
+    rgba(245, 87, 108, 0.15) 100%
+  );
+  border: 2px solid #f093fb;
+  border-radius: 12px;
+  color: #f5576c;
+  padding: 15px 20px;
+  border-left: 5px solid #f093fb;
+}
+
+.custom-alert-danger {
+  background: linear-gradient(
+    135deg,
+    rgba(250, 112, 154, 0.15) 0%,
+    rgba(254, 225, 64, 0.15) 100%
+  );
+  border: 2px solid #fa709a;
+  border-radius: 12px;
+  color: #fa709a;
+  padding: 15px 20px;
+  border-left: 5px solid #fa709a;
+}
+
+/* Edit Profile Card */
+.edit-card {
+  border: none;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+  position: relative;
+}
+
+.edit-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--success-gradient);
+}
+
+.edit-card-header {
+  background: var(--success-gradient);
+  color: white;
+  padding: 20px;
+  border: none;
+}
+
+.edit-card-header h5 {
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Form Labels */
+.form-label-gradient {
+  font-weight: 600;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 14px;
+}
+
+/* Custom Form Controls */
+.custom-form-input {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.custom-form-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.custom-form-input:disabled {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.05) 0%,
+    rgba(118, 75, 162, 0.05) 100%
+  );
+  cursor: not-allowed;
+}
+
+/* Save Button */
+.btn-save {
+  background: var(--success-gradient);
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(240, 147, 251, 0.3);
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(240, 147, 251, 0.5);
+  color: white;
+}
+
+/* Account Info Card */
+.account-info-card {
+  border: none;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+  position: relative;
+  background: white;
+}
+
+.account-info-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--warning-gradient);
+}
+
+.account-info-title {
+  background: var(--warning-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.account-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.account-info-item {
+  padding: 15px;
+  margin-bottom: 10px;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.05) 0%,
+    rgba(118, 75, 162, 0.05) 100%
+  );
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+  transition: all 0.3s ease;
+}
+
+.account-info-item:hover {
+  transform: translateX(5px);
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  );
+}
+
+.account-info-item i {
+  width: 25px;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.member-badge {
+  display: inline-block;
+  padding: 8px 20px;
+  background: var(--warning-gradient);
+  color: white;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);
+}
+
+/* Locked Info */
+.locked-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: linear-gradient(
+    135deg,
+    rgba(250, 112, 154, 0.1) 0%,
+    rgba(254, 225, 64, 0.1) 100%
+  );
+  border-radius: 15px;
+  font-size: 13px;
+  color: #fa709a;
+}
+
+/* Container Background */
+.profile-container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  padding: 40px 0;
+}
