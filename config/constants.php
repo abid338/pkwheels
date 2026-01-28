@@ -49,10 +49,9 @@ define('PHONE_PLACEHOLDER', '03XXXXXXXXX');
 
 
 // SEARCH KEYWORDS
-
 define('SEARCH_KEYWORDS', [
-    'bike' => ['bike', 'motorcycle', 'motorbike', 'cycle'],
-    'car' => ['car', 'vehicle', 'automobile'],
+    'bike' => ['bike', 'motorcycle', 'motorbike',],
+    'car' => ['car', 'vehicle',],
     'new' => ['new', 'brand new', 'fresh', 'unused'],
     'used' => ['used', 'second hand', 'old', 'pre-owned']
 ]);
