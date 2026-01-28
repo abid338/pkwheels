@@ -1,10 +1,9 @@
 <?php
 session_start();
 include "config/db.php";
+include "config/constants.php";
 
-$script_dir = dirname($_SERVER['SCRIPT_NAME']);
-$script_dir = rtrim($script_dir, '/\\');
-$base_path = $script_dir ? $script_dir . '/' : '';
+$base_path = calculateBasePath();
 $ad_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $ad_type = isset($_GET['type']) ? $_GET['type'] : '';
 
@@ -13,7 +12,6 @@ if (!$ad_id || !in_array($ad_type, ['car', 'bike'])) {
     exit;
 }
 
-// Fetch ad details based on type
 if ($ad_type == 'car') {
     $sql = "SELECT c.*, u.name as seller_name, u.phone as seller_phone, u.email as seller_email 
             FROM car_ads c
@@ -37,14 +35,15 @@ if (!$ad) {
 }
 
 $page_title = ($ad_type == 'car' ? $ad['car_info'] : $ad['bike_info']) . " - PakWheels";
+
 $images = [];
 for ($i = 1; $i <= 5; $i++) {
     $img_field = "image_$i";
     if (!empty($ad[$img_field])) {
-        $images[] = "uploads/ads/" . $ad_type . "s/" . $ad[$img_field];
+        $images[] = getUploadDir($ad_type) . $ad[$img_field];
     }
 }
-// related ads 
+
 $related_sql = "SELECT *, '$ad_type' as type FROM " . ($ad_type == 'car' ? 'car_ads' : 'bike_ads') . " 
                 WHERE city = '{$ad['city']}' AND id != $ad_id
                 ORDER BY created_at DESC LIMIT 4";
@@ -59,13 +58,11 @@ include "includes/navbar.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/details.css">
-    <title>Document</title>
+    <link rel="stylesheet" href="assets/css/ad_details.css">
+    <title><?php echo $page_title; ?></title>
 </head>
 
 <body>
-
-
     <div class="container py-4">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -88,9 +85,8 @@ include "includes/navbar.php";
                         <?php endif; ?>
                     </div>
 
-                    <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $ad['user_id']): ?>
-                        <a href="<?php echo $base_path; ?>edit_<?php echo $ad_type; ?>_ad.php?id=<?php echo $ad_id; ?>"
-                            class="edit-btn">
+                    <?php if (isLoggedIn() && $_SESSION['user_id'] == $ad['user_id']): ?>
+                        <a href="<?php echo $base_path; ?>edit_vehicle_ad.php?id=<?php echo $ad_id; ?>&type=<?php echo $ad_type; ?>" class="edit-btn">
                             <i class="fas fa-edit"></i>
                             <span>Edit Ad</span>
                         </a>
@@ -150,7 +146,7 @@ include "includes/navbar.php";
                 <?php endif; ?>
 
                 <div class="info-card">
-                    <div class="price-tag">PKR <?php echo number_format($ad['price']); ?></div>
+                    <div class="price-tag"><?php echo formatPrice($ad['price']); ?></div>
 
                     <h5 class="section-title">Description</h5>
                     <p class="description-text"><?php echo nl2br(htmlspecialchars($ad['description'])); ?></p>
@@ -207,11 +203,20 @@ include "includes/navbar.php";
                         </div>
                     </div>
 
-                    <?php if ($ad_type == 'bike' && !empty($ad['features'])): ?>
+                    <?php if (!empty($ad['features'])): ?>
                         <div class="mt-4">
                             <h5 class="section-title">Features</h5>
                             <div class="features-box">
-                                <?php echo nl2br(htmlspecialchars($ad['features'])); ?>
+                                <?php
+                                $features_array = json_decode($ad['features'], true);
+                                if (!empty($features_array)) {
+                                    echo '<ul class="features-list">';
+                                    foreach ($features_array as $feature) {
+                                        echo '<li><i class="fas fa-check-circle text-success me-2"></i>' . htmlspecialchars($feature) . '</li>';
+                                    }
+                                    echo '</ul>';
+                                }
+                                ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -241,7 +246,7 @@ include "includes/navbar.php";
                     <?php endif; ?>
 
                     <?php if ($ad['whatsapp_enabled']): ?>
-                        <a href="https://wa.me/<?php echo preg_replace('/[^0-9]/', '', $ad['mobile_number']); ?>?text=<?php echo urlencode("Hello! I'm interested in " . ($ad_type == 'car' ? $ad['car_info'] : $ad['bike_info']) . " (PKR " . number_format($ad['price']) . ")"); ?>"
+                        <a href="https://wa.me/<?php echo preg_replace('/[^0-9]/', '', $ad['mobile_number']); ?>?text=<?php echo urlencode("Hello! I'm interested in " . ($ad_type == 'car' ? $ad['car_info'] : $ad['bike_info']) . " (" . formatPrice($ad['price']) . ")"); ?>"
                             class="contact-btn whatsapp-btn" target="_blank">
                             <i class="fab fa-whatsapp"></i>
                             <span>WhatsApp</span>
@@ -261,17 +266,18 @@ include "includes/navbar.php";
                 </div>
             </div>
         </div>
+
         <?php if (mysqli_num_rows($related_result) > 0): ?>
             <div class="related-section">
-                <h4 class="related-title">Related <?php echo ucfirst($ad_type); ?>s</h4>
+                <h4 class="related-title">Related <?php echo ucfirst($ad_type); ?>s in <?php echo htmlspecialchars($ad['city']); ?></h4>
                 <div class="row g-4">
                     <?php while ($related = mysqli_fetch_assoc($related_result)): ?>
                         <div class="col-lg-3 col-md-6">
                             <div class="related-card">
                                 <?php
-                                $rel_img = !empty($related['image_1']) ? "uploads/ads/" . $ad_type . "s/" . $related['image_1'] : '';
+                                $rel_img = !empty($related['image_1']) ? getUploadDir($ad_type) . $related['image_1'] : '';
                                 ?>
-                                <?php if ($rel_img): ?>
+                                <?php if ($rel_img && file_exists($rel_img)): ?>
                                     <img src="<?php echo htmlspecialchars($rel_img); ?>" alt="Vehicle">
                                 <?php else: ?>
                                     <div class="related-placeholder">
@@ -280,7 +286,7 @@ include "includes/navbar.php";
                                 <?php endif; ?>
                                 <div class="related-card-body">
                                     <h6 class="related-title-text"><?php echo htmlspecialchars($ad_type == 'car' ? $related['car_info'] : $related['bike_info']); ?></h6>
-                                    <p class="related-price">PKR <?php echo number_format($related['price']); ?></p>
+                                    <p class="related-price"><?php echo formatPrice($related['price']); ?></p>
                                     <p class="related-meta">
                                         <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($related['city']); ?>
                                     </p>

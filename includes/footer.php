@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="assets/css/footer.css">
     <title>footer</title>
 </head>
-
 <body>
+    <?php
+    if (!defined('CONTACT_INFO')) {
+        include_once __DIR__ . '/../config/constants.php';
+    }
+    ?>
     <footer class="modern-footer text-white mt-5">
         <div class="container py-5">
             <div class="row g-4">
@@ -23,6 +26,7 @@
                         <span class="text-white-50 small">Trusted by 100K+ Users</span>
                     </div>
                 </div>
+                
                 <!-- Contact Section -->
                 <div class="col-lg-3 col-md-6">
                     <h5 class="footer-heading">Contact Us</h5>
@@ -31,8 +35,8 @@
                             <i class="fas fa-phone"></i>
                         </div>
                         <div>
-                            <a href="tel:+923096527842" class="text-decoration-none" style="color: inherit;">
-                                +92 309 6527842
+                            <a href="tel:<?php echo str_replace(' ', '', CONTACT_INFO['phone']); ?>" class="text-decoration-none" style="color: inherit;">
+                                <?php echo CONTACT_INFO['phone']; ?>
                             </a>
                         </div>
                     </div>
@@ -41,8 +45,8 @@
                             <i class="fas fa-envelope"></i>
                         </div>
                         <div>
-                            <a href="mailto:abid6527842@gmail.com" class="text-decoration-none" style="color: inherit;">
-                                abid6527842@gmail.com
+                            <a href="mailto:<?php echo CONTACT_INFO['email']; ?>" class="text-decoration-none" style="color: inherit;">
+                                <?php echo CONTACT_INFO['email']; ?>
                             </a>
                         </div>
                     </div>
@@ -50,9 +54,10 @@
                         <div class="footer-contact-icon">
                             <i class="fas fa-map-marker-alt"></i>
                         </div>
-                        <div>Lahore, Punjab, Pakistan</div>
+                        <div><?php echo CONTACT_INFO['location']; ?></div>
                     </div>
                 </div>
+                
                 <!-- Quick Links Section -->
                 <div class="col-lg-3 col-md-6">
                     <h5 class="footer-heading">Quick Links</h5>
@@ -64,21 +69,22 @@
                         <a href="<?php echo isset($base_path) ? $base_path : ''; ?>search.php" class="footer-link">Browse All</a>
                     </div>
                 </div>
+                
                 <!-- Follow Us Section -->
                 <div class="col-lg-3 col-md-6">
                     <h5 class="footer-heading">Follow Us</h5>
                     <p class="footer-description mb-3">Stay connected with us on social media for the latest updates and offers!</p>
                     <div class="social-links">
-                        <a href="#" class="social-icon youtube" target="_blank">
+                        <a href="<?php echo SOCIAL_LINKS['youtube']; ?>" class="social-icon youtube" target="_blank">
                             <i class="fab fa-youtube"></i>
                         </a>
-                        <a href="#" class="social-icon instagram" target="_blank">
+                        <a href="<?php echo SOCIAL_LINKS['instagram']; ?>" class="social-icon instagram" target="_blank">
                             <i class="fab fa-instagram"></i>
                         </a>
-                        <a href="#" class="social-icon facebook" target="_blank">
+                        <a href="<?php echo SOCIAL_LINKS['facebook']; ?>" class="social-icon facebook" target="_blank">
                             <i class="fab fa-facebook"></i>
                         </a>
-                        <a href="#" class="social-icon tiktok" target="_blank">
+                        <a href="<?php echo SOCIAL_LINKS['tiktok']; ?>" class="social-icon tiktok" target="_blank">
                             <i class="fab fa-tiktok"></i>
                         </a>
                     </div>
@@ -90,7 +96,7 @@
             <div class="row align-items-center">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
                     <p class="footer-copyright mb-0">
-                        &copy; 2026 <strong>PakWheels</strong>. All Rights Reserved.
+                        &copy; <?php echo date('Y'); ?> <strong>PakWheels</strong>. All Rights Reserved.
                     </p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
@@ -103,17 +109,19 @@
     </footer>
 
     <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/923096527842?text=Hello! I'm interested in PakWheels" target="_blank" class="whatsapp-float" title="Chat on WhatsApp">
+    <a href="https://wa.me/<?php echo CONTACT_INFO['whatsapp']; ?>?text=Hello! I'm interested in PakWheels" 
+       target="_blank" class="whatsapp-float" title="Chat on WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
+    
     <!-- Scroll to Top Button -->
     <button class="scroll-top-btn" id="scrollTopBtn" title="Back to Top">
         <i class="fas fa-arrow-up"></i>
     </button>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo isset($js_path) ? $js_path : '../'; ?>assets/js/main.js"></script>
     <script>
-        // Scroll to Top Functionality
         const scrollTopBtn = document.getElementById('scrollTopBtn');
 
         window.addEventListener('scroll', () => {
@@ -131,7 +139,5 @@
             });
         });
     </script>
-
 </body>
-
 </html>

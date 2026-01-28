@@ -77,7 +77,7 @@
                             </a>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="<?php echo $base_path; ?>post_car_ad.php">
+                                    <a class="dropdown-item" href="<?php echo $base_path; ?>post_vehicle_ad.php">
                                         <i class="fas fa-car text-primary"></i> Sell Your Car
                                     </a>
                                 </li>
@@ -85,7 +85,7 @@
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="<?php echo $base_path; ?>post_bike_ad.php">
+                                    <a class="dropdown-item" href="<?php echo $base_path; ?>post_vehicle_ad.php">
                                         <i class="fas fa-motorcycle text-success"></i> Sell Your Bike
                                     </a>
                                 </li>

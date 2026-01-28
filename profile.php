@@ -1,14 +1,15 @@
 <?php
 session_start();
 include "config/db.php";
-if(!isset($_SESSION['user_id'])) {
-    header("Location: auth/login.php");
-    exit;
-}
+include "config/constants.php";
+
+requireLogin("auth/login.php");
+
 $user_id = $_SESSION['user_id'];
 $base_path = "./";
 $css_path = "./";
-$page_title = "My Profile - PakWheels";
+$page_title = PAGE_TITLES['profile'];
+
 $sql = "SELECT * FROM users WHERE id='$user_id' LIMIT 1";
 $result = mysqli_query($conn, $sql);
 
@@ -19,19 +20,26 @@ if(mysqli_num_rows($result) === 1) {
     header("Location: auth/login.php");
     exit;
 }
+
 if($_SERVER['REQUEST_METHOD'] === "POST" && isset($_POST['update_profile'])) {
-    $name = mysqli_real_escape_string($conn, trim($_POST['name']));
-    $phone = mysqli_real_escape_string($conn, trim($_POST['phone']));
+    $name = sanitize($conn, $_POST['name']);
+    $phone = sanitize($conn, $_POST['phone']);
     
-    $update_sql = "UPDATE users SET name='$name', phone='$phone' WHERE id='$user_id'";
-    
-    if(mysqli_query($conn, $update_sql)) {
-        $_SESSION['user_name'] = $name;
-        $success_msg = "Profile updated successfully!";
-        $result = mysqli_query($conn, "SELECT * FROM users WHERE id='$user_id' LIMIT 1");
-        $user = mysqli_fetch_assoc($result);
+    if(strlen($name) < VALIDATION_RULES['name_min_length']) {
+        $error_msg = "Name must be at least " . VALIDATION_RULES['name_min_length'] . " characters!";
+    } elseif(!validatePhone($phone)) {
+        $error_msg = "Phone number must be exactly " . VALIDATION_RULES['phone_exact_length'] . " digits!";
     } else {
-        $error_msg = "Failed to update profile!";
+        $update_sql = "UPDATE users SET name='$name', phone='$phone' WHERE id='$user_id'";
+        
+        if(mysqli_query($conn, $update_sql)) {
+            $_SESSION['user_name'] = $name;
+            $success_msg = "Profile updated successfully!";
+            $result = mysqli_query($conn, "SELECT * FROM users WHERE id='$user_id' LIMIT 1");
+            $user = mysqli_fetch_assoc($result);
+        } else {
+            $error_msg = "Failed to update profile!";
+        }
     }
 }
 
@@ -44,7 +52,7 @@ include "includes/navbar.php";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="assets/css/profile.css">
-    <title>My Profile - PakWheels</title>
+    <title><?php echo $page_title; ?></title>
 </head>
 <body>
 <div class="profile-container">
@@ -52,7 +60,6 @@ include "includes/navbar.php";
         <div class="row">
             <div class="col-md-8 mx-auto">
                 
-                <!-- Profile Header -->
                 <div class="card profile-header-card mb-4">
                     <div class="card-body text-center p-5">
                         <div class="profile-avatar mb-4">
@@ -75,6 +82,7 @@ include "includes/navbar.php";
                         </span>
                     </div>
                 </div>
+
                 <?php if(isset($success_msg)): ?>
                     <div class="custom-alert-success mb-4">
                         <i class="fas fa-check-circle me-2"></i><?php echo $success_msg; ?>
@@ -87,7 +95,6 @@ include "includes/navbar.php";
                     </div>
                 <?php endif; ?>
                 
-                <!-- Edit Profile Form -->
                 <div class="card edit-card mb-4">
                     <div class="card-header edit-card-header">
                         <h5>
@@ -99,7 +106,8 @@ include "includes/navbar.php";
                             <div class="mb-4">
                                 <label class="form-label form-label-gradient">Full Name</label>
                                 <input type="text" name="name" class="form-control form-control-lg custom-form-input" 
-                                       value="<?php echo htmlspecialchars($user['name']); ?>" required minlength="3">
+                                       value="<?php echo htmlspecialchars($user['name']); ?>" required 
+                                       minlength="<?php echo VALIDATION_RULES['name_min_length']; ?>">
                             </div>
                             
                             <div class="mb-4">
@@ -117,7 +125,11 @@ include "includes/navbar.php";
                             <div class="mb-4">
                                 <label class="form-label form-label-gradient">Phone Number</label>
                                 <input type="text" name="phone" class="form-control form-control-lg custom-form-input" 
-                                       value="<?php echo htmlspecialchars($user['phone']); ?>" required minlength="10">
+                                       value="<?php echo htmlspecialchars($user['phone']); ?>" required 
+                                       minlength="<?php echo VALIDATION_RULES['phone_min_length']; ?>"
+                                       maxlength="<?php echo VALIDATION_RULES['phone_exact_length']; ?>"
+                                       pattern="<?php echo PHONE_PATTERN; ?>"
+                                       placeholder="<?php echo PHONE_PLACEHOLDER; ?>">
                             </div>
                             
                             <button type="submit" name="update_profile" class="btn btn-save">
@@ -127,7 +139,6 @@ include "includes/navbar.php";
                     </div>
                 </div>
                 
-                <!-- Account Info -->
                 <div class="card account-info-card">
                     <div class="card-body p-4">
                         <h6 class="account-info-title mb-4">Account Information</h6>

@@ -3,6 +3,7 @@
   --success-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
 /* Hero Section */
@@ -19,8 +20,7 @@
 }
 
 @keyframes gradientShift {
-  0%,
-  100% {
+  0%, 100% {
     background-position: 0% 50%;
   }
   50% {
@@ -107,7 +107,7 @@
   box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2) !important;
 }
 
-/* Card Headers */
+/* Card Headers - All Gradient Variants */
 .gradient-header-primary {
   background: var(--primary-gradient);
   color: white;
@@ -122,8 +122,22 @@
   border: none;
 }
 
+.gradient-header-info {
+  background: var(--info-gradient);
+  color: white;
+  padding: 20px;
+  border: none;
+}
+
 .gradient-header-warning {
   background: var(--warning-gradient);
+  color: white;
+  padding: 20px;
+  border: none;
+}
+
+.gradient-header-danger {
+  background: var(--danger-gradient);
   color: white;
   padding: 20px;
   border: none;
@@ -201,6 +215,24 @@
   border: none;
 }
 
+/* Checkboxes - For Car Features */
+.custom-checkbox {
+  padding: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.custom-checkbox:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.custom-checkbox input[type="checkbox"]:checked + label {
+  color: #667eea;
+  font-weight: bold;
+}
+
 /* Switch */
 .custom-switch-container {
   padding: 15px;
@@ -245,4 +277,32 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: bold;
+}
+
+/* Category-specific transitions */
+#featuresSection {
+  transition: all 0.4s ease;
+  opacity: 1;
+}
+
+#featuresSection[style*="display: none"] {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .step-card {
+    margin-bottom: 20px;
+  }
+  
+  .btn-gradient-submit {
+    width: 100%;
+    padding: 12px 30px;
+  }
+  
+  .custom-checkbox {
+    margin-bottom: 10px;
+  }
 }

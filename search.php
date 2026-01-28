@@ -1,8 +1,9 @@
 <?php
 session_start();
 include "config/db.php";
+include "config/constants.php";
 
-$page_title = "Search Vehicles - PakWheels";
+$page_title = PAGE_TITLES['search'];
 $css_path = "";
 $base_path = "";
 
@@ -16,28 +17,51 @@ $keyword_lower = strtolower(trim($keyword));
 $search_bikes = true;
 $search_cars = true;
 $condition_filter = '';
+
 if (!empty($keyword_lower)) {
-    if (strpos($keyword_lower, 'bike') !== false || strpos($keyword_lower, 'motorcycle') !== false) {
+    foreach (SEARCH_KEYWORDS['bike'] as $bike_keyword) {
+        if (strpos($keyword_lower, $bike_keyword) !== false) {
+            $search_bikes = true;
+            $search_cars = false;
+            break;
+        }
+    }
+    
+    foreach (SEARCH_KEYWORDS['car'] as $car_keyword) {
+        if (strpos($keyword_lower, $car_keyword) !== false) {
+            $search_cars = true;
+            $search_bikes = false;
+            break;
+        }
+    }
+    
+    $has_bike = false;
+    $has_car = false;
+    foreach (SEARCH_KEYWORDS['bike'] as $bike_keyword) {
+        if (strpos($keyword_lower, $bike_keyword) !== false) $has_bike = true;
+    }
+    foreach (SEARCH_KEYWORDS['car'] as $car_keyword) {
+        if (strpos($keyword_lower, $car_keyword) !== false) $has_car = true;
+    }
+    if ($has_bike && $has_car) {
         $search_bikes = true;
-        $search_cars = false;
-    }
-    if (strpos($keyword_lower, 'car') !== false) {
-        $search_cars = true;
-        $search_bikes = false;
-    }
-    if ((strpos($keyword_lower, 'bike') !== false || strpos($keyword_lower, 'motorcycle') !== false)
-        && strpos($keyword_lower, 'car') !== false
-    ) {
-        $search_bikes = true;
         $search_cars = true;
     }
-    if (strpos($keyword_lower, 'new') !== false) {
-        $condition_filter = 'new';
+    
+    foreach (SEARCH_KEYWORDS['new'] as $new_keyword) {
+        if (strpos($keyword_lower, $new_keyword) !== false) {
+            $condition_filter = 'new';
+            break;
+        }
     }
-    if (strpos($keyword_lower, 'used') !== false) {
-        $condition_filter = 'used';
+    foreach (SEARCH_KEYWORDS['used'] as $used_keyword) {
+        if (strpos($keyword_lower, $used_keyword) !== false) {
+            $condition_filter = 'used';
+            break;
+        }
     }
 }
+
 if (!empty($type)) {
     if ($type == 'new_bike') {
         $search_bikes = true;
@@ -58,29 +82,27 @@ if (!empty($type)) {
     }
 }
 
-$cities_sql = "SELECT DISTINCT city FROM car_ads UNION SELECT DISTINCT city FROM bike_ads ORDER BY city ASC";
-$cities_result = mysqli_query($conn, $cities_sql);
-function buildKeywordSearch($keyword, $info_field)
-{
+function buildKeywordSearch($keyword, $info_field) {
     if (empty($keyword)) return '';
-
     global $conn;
-    $search_terms = preg_replace('/(bike|car|motorcycle|new|used)/i', '', $keyword);
+    
+    $keywords_to_remove = array_merge(
+        SEARCH_KEYWORDS['bike'],
+        SEARCH_KEYWORDS['car'],
+        SEARCH_KEYWORDS['new'],
+        SEARCH_KEYWORDS['used']
+    );
+    
+    $pattern = '/(' . implode('|', $keywords_to_remove) . ')/i';
+    $search_terms = preg_replace($pattern, '', $keyword);
     $search_terms = trim($search_terms);
 
-    if (empty($search_terms)) {
-        return '';
-    }
+    if (empty($search_terms)) return '';
 
-    $keyword_safe = mysqli_real_escape_string($conn, $search_terms);
-
-    return " AND (
-        $info_field LIKE '%$keyword_safe%' OR 
-        description LIKE '%$keyword_safe%'
-    )";
+    $keyword_safe = sanitize($conn, $search_terms);
+    return " AND ($info_field LIKE '%$keyword_safe%' OR description LIKE '%$keyword_safe%')";
 }
 
-// SEARCH CARS
 if ($search_cars) {
     $car_sql = "SELECT *, 'car' as vehicle_type FROM car_ads WHERE 1=1";
     if (!empty($condition_filter)) {
@@ -88,7 +110,7 @@ if ($search_cars) {
     }
     $car_sql .= buildKeywordSearch($keyword, 'car_info');
     if (!empty($city)) {
-        $city_safe = mysqli_real_escape_string($conn, $city);
+        $city_safe = sanitize($conn, $city);
         $car_sql .= " AND city = '$city_safe'";
     }
     if (!empty($price)) {
@@ -99,17 +121,15 @@ if ($search_cars) {
             $car_sql .= " AND price BETWEEN $min AND $max";
         }
     }
-
     $car_sql .= " ORDER BY created_at DESC";
-
     $car_result = mysqli_query($conn, $car_sql);
-
     if ($car_result) {
         while ($row = mysqli_fetch_assoc($car_result)) {
             $results[] = $row;
         }
     }
 }
+
 if ($search_bikes) {
     $bike_sql = "SELECT *, 'bike' as vehicle_type FROM bike_ads WHERE 1=1";
     if (!empty($condition_filter)) {
@@ -117,7 +137,7 @@ if ($search_bikes) {
     }
     $bike_sql .= buildKeywordSearch($keyword, 'bike_info');
     if (!empty($city)) {
-        $city_safe = mysqli_real_escape_string($conn, $city);
+        $city_safe = sanitize($conn, $city);
         $bike_sql .= " AND city = '$city_safe'";
     }
     if (!empty($price)) {
@@ -128,11 +148,8 @@ if ($search_bikes) {
             $bike_sql .= " AND price BETWEEN $min AND $max";
         }
     }
-
     $bike_sql .= " ORDER BY created_at DESC";
-
     $bike_result = mysqli_query($conn, $bike_sql);
-
     if ($bike_result) {
         while ($row = mysqli_fetch_assoc($bike_result)) {
             $results[] = $row;
@@ -145,20 +162,16 @@ include "includes/navbar.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="assets/css/search.css">
-    <title>Search Vehicles - PakWheels</title>
+    <title><?php echo $page_title; ?></title>
 </head>
-
 <body>
     <div class="container py-5">
         <div class="search-header">
-            <h2 class="search-title d-inline-block">
-                Search All Vehicles
-            </h2>
+            <h2 class="search-title d-inline-block">Search All Vehicles</h2>
             <span class="result-count">
                 <i class="fas fa-list me-1"></i>
                 <?php echo count($results); ?> Results
@@ -176,30 +189,30 @@ include "includes/navbar.php";
                         placeholder="Honda, bike, new car,..."
                         value="<?php echo htmlspecialchars($keyword); ?>">
                 </div>
+                
                 <div class="col-md-3">
                     <select name="city" class="form-select search-select">
                         <option value="">All Cities</option>
-                        <?php
-                        mysqli_data_seek($cities_result, 0);
-                        while ($c = mysqli_fetch_assoc($cities_result)):
-                        ?>
-                            <option value="<?php echo htmlspecialchars($c['city']); ?>"
-                                <?php if ($c['city'] == $city) echo "selected"; ?>>
-                                <?php echo htmlspecialchars($c['city']); ?>
+                        <?php foreach (CITIES as $c): ?>
+                            <option value="<?php echo htmlspecialchars($c); ?>"
+                                <?php if ($c == $city) echo "selected"; ?>>
+                                <?php echo htmlspecialchars($c); ?>
                             </option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
+                
                 <div class="col-md-3">
                     <select name="price" class="form-select search-select">
                         <option value="">Any Price</option>
-                        <option value="0-500000" <?php if ($price == "0-500000") echo "selected"; ?>>Under 500K</option>
-                        <option value="500001-1000000" <?php if ($price == "500001-1000000") echo "selected"; ?>>500K - 1M</option>
-                        <option value="1000001-5000000" <?php if ($price == "1000001-5000000") echo "selected"; ?>>1M - 5M</option>
-                        <option value="5000001-10000000" <?php if ($price == "5000001-10000000") echo "selected"; ?>>5M - 10M</option>
-                        <option value="10000001-99999999" <?php if ($price == "10000001-99999999") echo "selected"; ?>>Above 10M</option>
+                        <?php foreach (PRICE_RANGES as $range => $label): ?>
+                            <option value="<?php echo $range; ?>" <?php if ($price == $range) echo "selected"; ?>>
+                                <?php echo $label; ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
+                
                 <div class="col-md-3">
                     <button type="submit" class="btn search-btn w-100">
                         <i class="fas fa-search me-1"></i> Search
@@ -216,7 +229,7 @@ include "includes/navbar.php";
                             <?php
                             $img_path = '';
                             if (!empty($vehicle['image_1'])) {
-                                $img_path = "uploads/ads/" . $vehicle['vehicle_type'] . "s/" . $vehicle['image_1'];
+                                $img_path = getUploadDir($vehicle['vehicle_type']) . $vehicle['image_1'];
                             }
                             ?>
 
@@ -245,7 +258,7 @@ include "includes/navbar.php";
                                 </div>
 
                                 <p class="vehicle-price mb-2">
-                                    PKR <?php echo number_format($vehicle['price']); ?>
+                                    <?php echo formatPrice($vehicle['price']); ?>
                                 </p>
 
                                 <div class="mb-2">
@@ -287,5 +300,4 @@ include "includes/navbar.php";
 
     <?php include "includes/footer.php"; ?>
 </body>
-
 </html>

@@ -1,29 +1,29 @@
 <?php
 session_start();
 include "config/db.php";
-if (!isset($_SESSION['user_id'])) {
-    header("Location: auth/login.php");
-    exit;
-}
+include "config/constants.php";
+
+requireLogin("auth/login.php");
 
 $user_id = $_SESSION['user_id'];
 $message = "";
 $message_type = "";
-$script_dir = dirname($_SERVER['SCRIPT_NAME']);
-$script_dir = rtrim($script_dir, '/\\');
-$base_path = $script_dir ? $script_dir . '/' : '';
+
+$base_path = calculateBasePath();
 $css_path = $base_path;
-$page_title = "My Ads - PakWheels";
+$page_title = PAGE_TITLES['my_ads'];
+
 if (isset($_GET['delete']) && isset($_GET['type'])) {
     $ad_id = intval($_GET['delete']);
     $ad_type = $_GET['type'];
+    
     if ($ad_type == 'car') {
         $img_query = mysqli_query($conn, "SELECT image_1, image_2, image_3, image_4, image_5 FROM car_ads WHERE id = $ad_id AND user_id = $user_id");
         if ($img_data = mysqli_fetch_assoc($img_query)) {
             for ($i = 1; $i <= 5; $i++) {
                 $img_field = "image_$i";
                 if (!empty($img_data[$img_field])) {
-                    $img_path = "uploads/ads/cars/" . $img_data[$img_field];
+                    $img_path = UPLOAD_DIR_CARS . $img_data[$img_field];
                     if (file_exists($img_path)) {
                         unlink($img_path);
                     }
@@ -38,11 +38,10 @@ if (isset($_GET['delete']) && isset($_GET['type'])) {
     } elseif ($ad_type == 'bike') {
         $img_query = mysqli_query($conn, "SELECT image_1, image_2, image_3, image_4, image_5 FROM bike_ads WHERE id = $ad_id AND user_id = $user_id");
         if ($img_data = mysqli_fetch_assoc($img_query)) {
-            // Delete images from folder
             for ($i = 1; $i <= 5; $i++) {
                 $img_field = "image_$i";
                 if (!empty($img_data[$img_field])) {
-                    $img_path = "uploads/ads/bikes/" . $img_data[$img_field];
+                    $img_path = UPLOAD_DIR_BIKES . $img_data[$img_field];
                     if (file_exists($img_path)) {
                         unlink($img_path);
                     }
@@ -56,8 +55,10 @@ if (isset($_GET['delete']) && isset($_GET['type'])) {
         }
     }
 }
+
 $car_ads_query = "SELECT *, 'car' as type FROM car_ads WHERE user_id = $user_id ORDER BY created_at DESC";
 $car_ads_result = mysqli_query($conn, $car_ads_query);
+
 $bike_ads_query = "SELECT *, 'bike' as type FROM bike_ads WHERE user_id = $user_id ORDER BY created_at DESC";
 $bike_ads_result = mysqli_query($conn, $bike_ads_query);
 
@@ -66,38 +67,27 @@ include "includes/navbar.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="assets/css/my_ads.css">
-    <title>My Ads - PakWheels</title>
+    <title><?php echo $page_title; ?></title>
 </head>
-
 <body>
-
-
-
     <div class="container py-5">
-
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-bold gradient-text"><i class="fas fa-list"></i> My Ads</h2>
             <div>
-                <a href="<?php echo $base_path; ?>post_car_ad.php" class="btn btn-gradient-primary">
+                <a href="<?php echo $base_path; ?>post_vehicle_ad.php" class="btn btn-gradient-primary">
                     <i class="fas fa-plus me-1"></i>Post Car Ad
                 </a>
-                <a href="<?php echo $base_path; ?>post_bike_ad.php" class="btn btn-gradient-success">
+                <a href="<?php echo $base_path; ?>post_vehicle_ad.php" class="btn btn-gradient-success">
                     <i class="fas fa-plus me-1"></i>Post Bike Ad
                 </a>
             </div>
         </div>
 
-        <?php if ($message): ?>
-            <div class="alert alert-<?php echo $message_type; ?> alert-dismissible fade show">
-                <?php echo htmlspecialchars($message); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+        <?php if ($message): displayAlert($message, $message_type); endif; ?>
 
         <!-- Car Ads Section -->
         <div class="mb-5">
@@ -109,7 +99,7 @@ include "includes/navbar.php";
                         <div class="col-md-6 col-lg-4">
                             <div class="card card-gradient shadow-sm h-100">
                                 <?php if (!empty($ad['image_1'])): ?>
-                                    <img src="uploads/ads/cars/<?php echo htmlspecialchars($ad['image_1']); ?>"
+                                    <img src="<?php echo UPLOAD_DIR_CARS . htmlspecialchars($ad['image_1']); ?>"
                                         class="card-img-top"
                                         style="height:200px; object-fit:cover;">
                                 <?php else: ?>
@@ -120,7 +110,7 @@ include "includes/navbar.php";
 
                                 <div class="card-body">
                                     <h5 class="card-title"><?php echo htmlspecialchars($ad['car_info']); ?></h5>
-                                    <p class="price-tag fw-bold fs-5 mb-2">PKR <?php echo number_format($ad['price']); ?></p>
+                                    <p class="price-tag fw-bold fs-5 mb-2"><?php echo formatPrice($ad['price']); ?></p>
                                     <p class="text-muted small mb-2">
                                         <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($ad['city']); ?> |
                                         <i class="fas fa-tachometer-alt"></i> <?php echo number_format($ad['mileage']); ?> KM
@@ -134,7 +124,7 @@ include "includes/navbar.php";
                                             class="btn btn-sm btn-gradient-view flex-fill">
                                             <i class="fas fa-eye"></i> View
                                         </a>
-                                        <a href="<?php echo $base_path; ?>edit_car_ad.php?id=<?php echo $ad['id']; ?>"
+                                        <a href="<?php echo $base_path; ?>edit_vehicle_ad.php?id=<?php echo $ad['id']; ?>&type=car"
                                             class="btn btn-sm btn-gradient-edit flex-fill">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
@@ -152,7 +142,7 @@ include "includes/navbar.php";
             <?php else: ?>
                 <div class="alert alert-gradient-info">
                     <i class="fas fa-info-circle"></i> You haven't posted any car ads yet.
-                    <a href="<?php echo $base_path; ?>post_car_ad.php" class="alert-link-gradient">Post your first car ad now!</a>
+                    <a href="<?php echo $base_path; ?>post_vehicle_ad.php" class="alert-link-gradient">Post your first car ad now!</a>
                 </div>
             <?php endif; ?>
         </div>
@@ -167,7 +157,7 @@ include "includes/navbar.php";
                         <div class="col-md-6 col-lg-4">
                             <div class="card card-gradient shadow-sm h-100">
                                 <?php if (!empty($ad['image_1'])): ?>
-                                    <img src="uploads/ads/bikes/<?php echo htmlspecialchars($ad['image_1']); ?>"
+                                    <img src="<?php echo UPLOAD_DIR_BIKES . htmlspecialchars($ad['image_1']); ?>"
                                         class="card-img-top"
                                         style="height:200px; object-fit:cover;">
                                 <?php else: ?>
@@ -178,7 +168,7 @@ include "includes/navbar.php";
 
                                 <div class="card-body">
                                     <h5 class="card-title"><?php echo htmlspecialchars($ad['bike_info']); ?></h5>
-                                    <p class="price-tag fw-bold fs-5 mb-2">PKR <?php echo number_format($ad['price']); ?></p>
+                                    <p class="price-tag fw-bold fs-5 mb-2"><?php echo formatPrice($ad['price']); ?></p>
                                     <p class="text-muted small mb-2">
                                         <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($ad['city']); ?> |
                                         <i class="fas fa-tachometer-alt"></i> <?php echo number_format($ad['mileage']); ?> KM
@@ -192,7 +182,7 @@ include "includes/navbar.php";
                                             class="btn btn-sm btn-gradient-view flex-fill">
                                             <i class="fas fa-eye"></i> View
                                         </a>
-                                        <a href="<?php echo $base_path; ?>edit_bike_ad.php?id=<?php echo $ad['id']; ?>"
+                                        <a href="<?php echo $base_path; ?>edit_vehicle_ad.php?id=<?php echo $ad['id']; ?>&type=bike"
                                             class="btn btn-sm btn-gradient-edit flex-fill">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
@@ -210,7 +200,7 @@ include "includes/navbar.php";
             <?php else: ?>
                 <div class="alert alert-gradient-info">
                     <i class="fas fa-info-circle"></i> You haven't posted any bike ads yet.
-                    <a href="<?php echo $base_path; ?>post_bike_ad.php" class="alert-link-gradient">Post your first bike ad now!</a>
+                    <a href="<?php echo $base_path; ?>post_vehicle_ad.php" class="alert-link-gradient">Post your first bike ad now!</a>
                 </div>
             <?php endif; ?>
         </div>
@@ -218,5 +208,4 @@ include "includes/navbar.php";
     </div>
     <?php include "includes/footer.php"; ?>
 </body>
-
 </html>

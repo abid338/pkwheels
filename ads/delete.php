@@ -1,33 +1,54 @@
 <?php
 session_start();
-include "../config/db.php";
+include "config/db.php";
+include "config/constants.php";
 
-if(!isset($_SESSION['user_id'])) {
-    header("Location: ../auth/login.php");
+requireLogin("auth/login.php");
+
+$ad_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$ad_type = isset($_GET['type']) ? sanitize($conn, $_GET['type']) : '';
+$user_id = $_SESSION['user_id'];
+
+// Validate type
+if (!in_array($ad_type, ['car', 'bike'])) {
+    header("Location: my_ads.php");
     exit;
 }
 
-$vehicle_id = $_GET['id'] ?? 0;
-$vehicle_id = intval($vehicle_id);
-$user_id = $_SESSION['user_id'];
 
-$sql = "SELECT * FROM vehicles WHERE id=$vehicle_id AND user_id=$user_id LIMIT 1";
-$result = mysqli_query($conn, $sql);
+$table = ($ad_type === 'car') ? 'car_ads' : 'bike_ads';
+$upload_dir = getUploadDir($ad_type);
 
-if(mysqli_num_rows($result) === 1) {
-    mysqli_query($conn, "DELETE FROM vehicle_colors WHERE vehicle_id=$vehicle_id");
-    
-    $images_result = mysqli_query($conn, "SELECT image_path FROM vehicle_images WHERE vehicle_id=$vehicle_id");
-    while($img = mysqli_fetch_assoc($images_result)) {
-        if(file_exists($img['image_path'])) {
-            unlink($img['image_path']);
+// Get image data for deletion
+$img_query = "SELECT image_1, image_2, image_3, image_4, image_5 
+              FROM $table 
+              WHERE id = $ad_id AND user_id = $user_id 
+              LIMIT 1";
+$img_result = mysqli_query($conn, $img_query);
+
+if ($img_data = mysqli_fetch_assoc($img_result)) {
+    // Delete all images from server
+    for ($i = 1; $i <= 5; $i++) {
+        $img_field = "image_$i";
+        if (!empty($img_data[$img_field])) {
+            $img_path = $upload_dir . $img_data[$img_field];
+            if (file_exists($img_path)) {
+                unlink($img_path);
+            }
         }
     }
-    
-    mysqli_query($conn, "DELETE FROM vehicle_images WHERE vehicle_id=$vehicle_id");
-    mysqli_query($conn, "DELETE FROM vehicles WHERE id=$vehicle_id");
+
+
+    $delete_sql = "DELETE FROM $table WHERE id = $ad_id AND user_id = $user_id";
+    if (mysqli_query($conn, $delete_sql)) {
+        $_SESSION['delete_success'] = ucfirst($ad_type) . " ad deleted successfully!";
+    } else {
+        $_SESSION['delete_error'] = "Failed to delete " . $ad_type . " ad!";
+    }
+} else {
+    $_SESSION['delete_error'] = "Ad not found or you don't have permission to delete it!";
 }
 
-header("Location: ../index.php");
+// Redirect back to my ads page
+header("Location: my_ads.php");
 exit;
-?>

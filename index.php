@@ -1,17 +1,21 @@
 <?php
 session_start();
 include "config/db.php";
-$script_dir = dirname($_SERVER['SCRIPT_NAME']);
-$script_dir = rtrim($script_dir, '/\\');
-$base_path = $script_dir ? $script_dir . '/' : '';
+include "config/constants.php";
+
+$base_path = calculateBasePath();
 $css_path = $base_path;
-$page_title = "PakWheels - Buy & Sell Cars & Bikes";
+$page_title = PAGE_TITLES['home'];
+
 $new_bikes_sql = "SELECT * FROM bike_ads WHERE vehicle_condition = 'new' ORDER BY created_at DESC LIMIT 4";
 $new_bikes_result = mysqli_query($conn, $new_bikes_sql);
+
 $used_bikes_sql = "SELECT * FROM bike_ads WHERE vehicle_condition = 'used' ORDER BY created_at DESC LIMIT 4";
 $used_bikes_result = mysqli_query($conn, $used_bikes_sql);
+
 $new_cars_sql = "SELECT * FROM car_ads WHERE vehicle_condition = 'new' ORDER BY created_at DESC LIMIT 4";
 $new_cars_result = mysqli_query($conn, $new_cars_sql);
+
 $used_cars_sql = "SELECT * FROM car_ads WHERE vehicle_condition = 'used' ORDER BY created_at DESC LIMIT 4";
 $used_cars_result = mysqli_query($conn, $used_cars_sql);
 
@@ -26,6 +30,7 @@ $total_bikes = mysqli_fetch_assoc($total_bikes_result)['count'];
 $total_users_sql = "SELECT COUNT(*) as count FROM users";
 $total_users_result = mysqli_query($conn, $total_users_sql);
 $total_users = mysqli_fetch_assoc($total_users_result)['count'];
+
 $total_deals_sql = "SELECT (SELECT COUNT(*) FROM car_ads) + (SELECT COUNT(*) FROM bike_ads) as total_deals";
 $total_deals_result = mysqli_query($conn, $total_deals_sql);
 $total_deals = mysqli_fetch_assoc($total_deals_result)['total_deals'];
@@ -35,17 +40,13 @@ include "includes/navbar.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="assets/css/index.css">
-    <title>PakWheels - Buy & Sell Cars & Bikes</title>
+    <title><?php echo $page_title; ?></title>
 </head>
-
 <body>
-
-
     <!-- Hero Section -->
     <div class="hero-section">
         <div class="container">
@@ -57,8 +58,8 @@ include "includes/navbar.php";
                         <a href="<?php echo $base_path; ?>search.php" class="btn btn-hero btn-hero-primary">
                             <i class="fas fa-search me-2"></i>Browse Vehicles
                         </a>
-                        <?php if (isset($_SESSION['user_id'])): ?>
-                            <a href="<?php echo $base_path; ?>post_car_ad.php" class="btn btn-hero btn-hero-outline">
+                        <?php if (isLoggedIn()): ?>
+                            <a href="<?php echo $base_path; ?>post_vehicle_ad.php" class="btn btn-hero btn-hero-outline">
                                 <i class="fas fa-plus-circle me-2"></i>Sell Your Vehicle
                             </a>
                         <?php endif; ?>
@@ -105,7 +106,6 @@ include "includes/navbar.php";
     </div>
 
     <div class="container py-5">
-
         <!-- New Bikes Section -->
         <div class="mb-5 new-bikes">
             <div class="section-header d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -129,7 +129,7 @@ include "includes/navbar.php";
                             <div class="vehicle-card">
                                 <div class="vehicle-card-img-wrapper">
                                     <?php
-                                    $img_path = !empty($bike['image_1']) ? "uploads/ads/bikes/" . $bike['image_1'] : '';
+                                    $img_path = !empty($bike['image_1']) ? UPLOAD_DIR_BIKES . $bike['image_1'] : '';
                                     ?>
                                     <?php if ($img_path && file_exists($img_path)): ?>
                                         <img src="<?php echo htmlspecialchars($img_path); ?>" alt="Bike">
@@ -138,13 +138,12 @@ include "includes/navbar.php";
                                             <i class="fas fa-motorcycle fa-4x text-success"></i>
                                         </div>
                                     <?php endif; ?>
-
                                     <span class="vehicle-badge bg-success text-white">NEW</span>
                                 </div>
 
                                 <div class="vehicle-card-body">
                                     <h6 class="vehicle-title"><?php echo htmlspecialchars($bike['bike_info']); ?></h6>
-                                    <div class="vehicle-price">PKR <?php echo number_format($bike['price']); ?></div>
+                                    <div class="vehicle-price"><?php echo formatPrice($bike['price']); ?></div>
                                     <div class="vehicle-meta">
                                         <span><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($bike['city']); ?></span>
                                         <span><i class="fas fa-tachometer-alt me-1"></i><?php echo number_format($bike['mileage']); ?> KM</span>
@@ -192,7 +191,7 @@ include "includes/navbar.php";
                             <div class="vehicle-card">
                                 <div class="vehicle-card-img-wrapper">
                                     <?php
-                                    $img_path = !empty($bike['image_1']) ? "uploads/ads/bikes/" . $bike['image_1'] : '';
+                                    $img_path = !empty($bike['image_1']) ? UPLOAD_DIR_BIKES . $bike['image_1'] : '';
                                     ?>
                                     <?php if ($img_path && file_exists($img_path)): ?>
                                         <img src="<?php echo htmlspecialchars($img_path); ?>" alt="Bike">
@@ -201,13 +200,12 @@ include "includes/navbar.php";
                                             <i class="fas fa-motorcycle fa-4x text-info"></i>
                                         </div>
                                     <?php endif; ?>
-
                                     <span class="vehicle-badge bg-info text-white">USED</span>
                                 </div>
 
                                 <div class="vehicle-card-body">
                                     <h6 class="vehicle-title"><?php echo htmlspecialchars($bike['bike_info']); ?></h6>
-                                    <div class="vehicle-price">PKR <?php echo number_format($bike['price']); ?></div>
+                                    <div class="vehicle-price"><?php echo formatPrice($bike['price']); ?></div>
                                     <div class="vehicle-meta">
                                         <span><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($bike['city']); ?></span>
                                         <span><i class="fas fa-tachometer-alt me-1"></i><?php echo number_format($bike['mileage']); ?> KM</span>
@@ -237,10 +235,10 @@ include "includes/navbar.php";
             <div class="section-header d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
                     <h2 class="section-title">
-                        <i class="fas fa-car me-3" style="color: #6366f1;"></i>New Cars
+                        <i class="fas fa-car me-3" style="color: #8b5cf6;"></i>New Cars
                     </h2>
                     <span class="section-badge bg-primary text-white ms-3">
-                        <i class="fas fa-star"></i> Latest Models
+                        <i class="fas fa-star"></i> Brand New
                     </span>
                 </div>
                 <a href="<?php echo $base_path; ?>search.php?type=new_car" class="btn btn-view-all btn-outline-primary">
@@ -255,7 +253,7 @@ include "includes/navbar.php";
                             <div class="vehicle-card">
                                 <div class="vehicle-card-img-wrapper">
                                     <?php
-                                    $img_path = !empty($car['image_1']) ? "uploads/ads/cars/" . $car['image_1'] : '';
+                                    $img_path = !empty($car['image_1']) ? UPLOAD_DIR_CARS . $car['image_1'] : '';
                                     ?>
                                     <?php if ($img_path && file_exists($img_path)): ?>
                                         <img src="<?php echo htmlspecialchars($img_path); ?>" alt="Car">
@@ -264,13 +262,12 @@ include "includes/navbar.php";
                                             <i class="fas fa-car fa-4x text-primary"></i>
                                         </div>
                                     <?php endif; ?>
-
                                     <span class="vehicle-badge bg-primary text-white">NEW</span>
                                 </div>
 
                                 <div class="vehicle-card-body">
                                     <h6 class="vehicle-title"><?php echo htmlspecialchars($car['car_info']); ?></h6>
-                                    <div class="vehicle-price">PKR <?php echo number_format($car['price']); ?></div>
+                                    <div class="vehicle-price"><?php echo formatPrice($car['price']); ?></div>
                                     <div class="vehicle-meta">
                                         <span><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($car['city']); ?></span>
                                         <span><i class="fas fa-tachometer-alt me-1"></i><?php echo number_format($car['mileage']); ?> KM</span>
@@ -300,10 +297,10 @@ include "includes/navbar.php";
             <div class="section-header d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
                     <h2 class="section-title">
-                        <i class="fas fa-car me-3" style="color: #fbbf24;"></i>Used Cars
+                        <i class="fas fa-car me-3" style="color: #f59e0b;"></i>Used Cars
                     </h2>
                     <span class="section-badge bg-warning text-dark ms-3">
-                        <i class="fas fa-certificate"></i> Verified
+                        <i class="fas fa-check-circle"></i> Verified
                     </span>
                 </div>
                 <a href="<?php echo $base_path; ?>search.php?type=used_car" class="btn btn-view-all btn-outline-warning">
@@ -318,7 +315,7 @@ include "includes/navbar.php";
                             <div class="vehicle-card">
                                 <div class="vehicle-card-img-wrapper">
                                     <?php
-                                    $img_path = !empty($car['image_1']) ? "uploads/ads/cars/" . $car['image_1'] : '';
+                                    $img_path = !empty($car['image_1']) ? UPLOAD_DIR_CARS . $car['image_1'] : '';
                                     ?>
                                     <?php if ($img_path && file_exists($img_path)): ?>
                                         <img src="<?php echo htmlspecialchars($img_path); ?>" alt="Car">
@@ -327,13 +324,12 @@ include "includes/navbar.php";
                                             <i class="fas fa-car fa-4x text-warning"></i>
                                         </div>
                                     <?php endif; ?>
-
                                     <span class="vehicle-badge bg-warning text-dark">USED</span>
                                 </div>
 
                                 <div class="vehicle-card-body">
                                     <h6 class="vehicle-title"><?php echo htmlspecialchars($car['car_info']); ?></h6>
-                                    <div class="vehicle-price">PKR <?php echo number_format($car['price']); ?></div>
+                                    <div class="vehicle-price"><?php echo formatPrice($car['price']); ?></div>
                                     <div class="vehicle-meta">
                                         <span><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($car['city']); ?></span>
                                         <span><i class="fas fa-tachometer-alt me-1"></i><?php echo number_format($car['mileage']); ?> KM</span>
@@ -357,7 +353,6 @@ include "includes/navbar.php";
                 <?php endif; ?>
             </div>
         </div>
-
     </div>
 
     <!-- Featured Categories Section -->
@@ -474,5 +469,4 @@ include "includes/navbar.php";
 
     <?php include "includes/footer.php"; ?>
 </body>
-
 </html>

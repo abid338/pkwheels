@@ -1,39 +1,42 @@
 <?php
 session_start();
 include "../config/db.php";
+include "../config/constants.php";
 
 $message = "";
 $base_path = "../";
 $css_path = "../";
-$page_title = "Login - PakWheels";
-if (isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
-    exit;
-}
+$page_title = PAGE_TITLES['login'];
+
+redirectIfLoggedIn("../index.php");
 
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $email = sanitize($conn, $_POST['email']);
     $pass = $_POST['password'];
 
-    $sql = "SELECT * FROM users WHERE email='$email' LIMIT 1";
-    $result = mysqli_query($conn, $sql);
-
-    if (mysqli_num_rows($result) === 1) {
-        $user = mysqli_fetch_assoc($result);
-
-        if (password_verify($pass, $user['password'])) {
-            // Login successful 
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['user_email'] = $user['email'];
-
-            header("Location: ../index.php");
-            exit;
-        } else {
-            $message = "Incorrect password!";
-        }
+    if (!validateEmail($email)) {
+        $message = "Invalid email format!";
     } else {
-        $message = "Email not registered!";
+        $sql = "SELECT * FROM users WHERE email='$email' LIMIT 1";
+        $result = mysqli_query($conn, $sql);
+
+        if (mysqli_num_rows($result) === 1) {
+            $user = mysqli_fetch_assoc($result);
+
+            if (password_verify($pass, $user['password'])) {
+                // Login successful
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['user_email'] = $user['email'];
+
+                header("Location: ../index.php");
+                exit;
+            } else {
+                $message = "Incorrect password!";
+            }
+        } else {
+            $message = "Email not registered!";
+        }
     }
 }
 ?>
@@ -43,11 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="../assets/css/login.css">
     <title><?php echo $page_title; ?></title>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 </head>
 
 <body>
@@ -64,27 +65,23 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
             <?php if ($message): ?>
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-circle"></i>
-                    <span><?php echo $message; ?></span>
+                    <span><?php echo htmlspecialchars($message); ?></span>
                 </div>
             <?php endif; ?>
 
             <form method="POST">
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
-                    <input type="email"
-                        name="email"
-                        class="form-input"
-                        placeholder="Enter your email"
-                        required>
+                    <input type="email" name="email" class="form-input"
+                        placeholder="Enter your email" required
+                        value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password"
-                        name="password"
-                        class="form-input"
-                        placeholder="Enter your password"
-                        required>
+                    <input type="password" name="password" class="form-input"
+                        placeholder="Enter your password" required
+                        minlength="<?php echo VALIDATION_RULES['password_min_length']; ?>">
                 </div>
 
                 <button type="submit" class="submit-btn">
